@@ -1,0 +1,2 @@
+%{"membrane_caps_audio_mpeg": {:git, "git@github.com:membraneframework/membrane-caps-audio-mpeg.git", "50bd9c9a0f5045e8fe39479062cf78821b826c9d", []},
+  "membrane_core": {:git, "git@github.com:membraneframework/membrane-core.git", "ad2634c7db5214d0daaafd262be7e2a8cdd5eadd", []}}
