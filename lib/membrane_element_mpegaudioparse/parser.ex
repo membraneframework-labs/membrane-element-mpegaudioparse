@@ -18,23 +18,27 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
 
   @doc false
   def handle_init(_) do
-    {:ok, %{}}
+    {:ok, %{
+      queue: << >>,
+      caps: nil,
+    }}
   end
 
 
   @doc false
-  def handle_buffer(:sink, _caps, %Membrane.Buffer{payload: payload} = buffer, state) do
-    case do_parse(payload, nil, []) do
-      {:ok, commands} ->
-        {:ok, commands, state}
+  def handle_buffer(:sink, _caps, %Membrane.Buffer{payload: payload}, %{queue: queue, caps: caps} = state) do
+    case do_parse(queue <> payload, caps, []) do
+      {:ok, commands, new_queue, new_caps} ->
+        {:ok, commands |> Enum.reverse, %{state | queue: new_queue, caps: new_caps}}
     end
   end
 
 
-  defp do_parse(<< >>, _previous_caps, acc), do: {:ok, acc |> Enum.reverse}
+  defp do_parse(<< >>, previous_caps, acc), do: {:ok, acc, << >>, previous_caps}
 
-  defp do_parse(payload, previous_caps, acc) when byte_size(payload) >= 32 do # We have at least header
-    << 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, # Frame sync
+  # We have at least header.
+  defp do_parse(payload, previous_caps, acc) when byte_size(payload) >= 4 do
+    << 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1,
        version         :: 2-bitstring,
        layer           :: 2-bitstring,
        crc_enabled     :: 1-bitstring,
@@ -73,34 +77,31 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
         emphasis_mode: parse_emphasis_mode(emphasis_mode),
       }
 
-    rest = if crc_enabled do
-      rest
-    else
-      << checksum :: 16-bitstring, rest :: bitstring >> = rest
-      rest
-    end
-
     frame_size = if padding_enabled do
       ((144 * bitrate * 1000) |> div(sample_rate)) + 1
     else
       (144 * bitrate * 1000) |> div(sample_rate)
     end
 
-    << frame_payload :: size(frame_size)-unit(8)-binary, rest :: bitstring >> = payload
+    if byte_size(payload) < frame_size do
+      {:ok, acc, payload, previous_caps}
 
-    acc = if previous_caps != caps do
-      # IO.puts "{:caps, {:source, #{inspect(caps)}}},"
-      [{:caps, {:source, caps}}|acc]
     else
-      acc
+      << frame_payload :: size(frame_size)-unit(8)-binary, rest :: bitstring >> = payload
+
+      acc = if previous_caps != caps do
+        [{:caps, {:source, caps}}|acc]
+      else
+        acc
+      end
+
+      frame_buffer = {:send, {:source, %Membrane.Buffer{payload: frame_payload}}}
+      do_parse(rest, caps, [frame_buffer|acc])
     end
+  end
 
-    # x = frame_payload |> Base.encode16
-    # x = Regex.scan(~r/../, x) |> Enum.map(fn([x]) -> "0x#{x}" end) |> Enum.join(", ")
-    # IO.puts "{:send, {:source, %Membrane.Buffer{payload: << #{x} >>}}},"
-
-    frame_buffer = {:send, {:source, %Membrane.Buffer{payload: payload}}}
-    do_parse(rest, caps, [frame_buffer|acc])
+  defp do_parse(payload, previous_caps, acc) do
+    {:ok, acc, payload, previous_caps}
   end
 
 
