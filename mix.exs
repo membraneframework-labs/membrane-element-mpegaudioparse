@@ -32,6 +32,11 @@ defmodule Membrane.Element.MPEGAudioParse.Mixfile do
     [
       {:membrane_core, git: "git@github.com:membraneframework/membrane-core.git"},
       {:membrane_caps_audio_mpeg, git: "git@github.com:membraneframework/membrane-caps-audio-mpeg.git"},
+
+      {:espec,       "~> 1.3",  only: :test},
+      {:excoveralls, "~> 0.6",  only: :test},
+
+      {:ex_doc,      "~> 0.14", only: :dev},
     ]
   end
 end
