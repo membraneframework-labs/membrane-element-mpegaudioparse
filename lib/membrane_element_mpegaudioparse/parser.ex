@@ -2,15 +2,14 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   use Membrane.Element.Base.Filter
   alias Membrane.Caps.Audio.MPEG
 
+  @mpeg_header_size 4
 
   def_known_sink_pads %{
-    :sink => {:always, :any}
+    :sink => {:always, {:pull, demand_in: :bytes}, :any}
   }
 
   def_known_source_pads %{
-    :source => {:always, [
-      %MPEG{}
-    ]}
+    :source => {:always, :pull, :any}
   }
 
 
@@ -21,23 +20,26 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     {:ok, %{
       queue: << >>,
       caps: nil,
+      frame_size: @mpeg_header_size,
     }}
   end
 
+  def handle_demand(:source, n_bufs, :buffers, _params, %{queue: queue, frame_size: frame_size} = state) do
+    demanded_bytes = frame_size * n_bufs - byte_size(queue)
+    {{:ok, demand: {:sink, demanded_bytes}}, state}
+  end
 
-  @doc false
-  def handle_buffer(:sink, _caps, %Membrane.Buffer{payload: payload}, %{queue: queue, caps: caps} = state) do
-    case do_parse(queue <> payload, caps, []) do
-      {:ok, commands, new_queue, new_caps} ->
-        {:ok, commands |> Enum.reverse, %{state | queue: new_queue, caps: new_caps}}
+  def handle_process1(:sink, %Membrane.Buffer{payload: payload}, _params, %{queue: queue, caps: caps, frame_size: frame_size} = state) do
+    case do_parse(queue <> payload, caps, frame_size, []) do
+      {:ok, commands, new_queue, new_caps, new_frame_size} ->
+        {{:ok, commands |> Enum.reverse}, %{state | queue: new_queue, caps: new_caps, frame_size: new_frame_size}}
     end
   end
 
-
-  defp do_parse(<< >>, previous_caps, acc), do: {:ok, acc, << >>, previous_caps}
+  defp do_parse(<< >>, previous_caps, prev_frame_size, acc), do: {:ok, acc, << >>, previous_caps, prev_frame_size}
 
   # We have at least header.
-  defp do_parse(payload, previous_caps, acc) when byte_size(payload) >= 4 do
+  defp do_parse(payload, previous_caps, prev_frame_size, acc) when byte_size(payload) >= @mpeg_header_size do
     << 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1,
        version         :: 2-bitstring,
        layer           :: 2-bitstring,
@@ -84,7 +86,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     end
 
     if byte_size(payload) < frame_size do
-      {:ok, acc, payload, previous_caps}
+      {:ok, acc, payload, previous_caps, frame_size}
 
     else
       << frame_payload :: size(frame_size)-unit(8)-binary, rest :: bitstring >> = payload
@@ -95,13 +97,13 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
         acc
       end
 
-      frame_buffer = {:send, {:source, %Membrane.Buffer{payload: frame_payload}}}
-      do_parse(rest, caps, [frame_buffer|acc])
+      frame_buffer = {:buffer, {:source, %Membrane.Buffer{payload: frame_payload}}}
+      do_parse(rest, caps, frame_size, [frame_buffer|acc])
     end
   end
 
-  defp do_parse(payload, previous_caps, acc) do
-    {:ok, acc, payload, previous_caps}
+  defp do_parse(payload, previous_caps, prev_frame_size, acc) do
+    {:ok, acc, payload, previous_caps, prev_frame_size}
   end
 
 
