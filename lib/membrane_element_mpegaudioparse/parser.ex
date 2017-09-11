@@ -120,6 +120,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
 
 
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 0 :: 1, 0 :: 1 >>, _, _), do: :free
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1 >>, _, _), do: :bad
 
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 0 :: 1, 1 :: 1 >>, :v1, :layer1), do: 32
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v1, :layer1), do: 64
@@ -133,8 +134,8 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v1, :layer1), do: 320
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 1 :: 1 >>, :v1, :layer1), do: 352
   defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 0 :: 1 >>, :v1, :layer1), do: 384
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v1, :layer1), do: 416
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1 >>, :v1, :layer1), do: 448
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 1 :: 1 >>, :v1, :layer1), do: 416
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v1, :layer1), do: 448
 
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 0 :: 1, 1 :: 1 >>, :v1, :layer2), do: 32
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v1, :layer2), do: 48
@@ -148,8 +149,8 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v1, :layer2), do: 192
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 1 :: 1 >>, :v1, :layer2), do: 224
   defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 0 :: 1 >>, :v1, :layer2), do: 256
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v1, :layer2), do: 320
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1 >>, :v1, :layer2), do: 384
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 1 :: 1 >>, :v1, :layer2), do: 320
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v1, :layer2), do: 384
 
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 0 :: 1, 1 :: 1 >>, :v1, :layer3), do: 32
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v1, :layer3), do: 40
@@ -163,8 +164,8 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v1, :layer3), do: 160
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 1 :: 1 >>, :v1, :layer3), do: 192
   defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 0 :: 1 >>, :v1, :layer3), do: 224
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v1, :layer3), do: 256
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1 >>, :v1, :layer3), do: 320
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 1 :: 1 >>, :v1, :layer3), do: 256
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v1, :layer3), do: 320
 
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 0 :: 1, 1 :: 1 >>, :v2, :layer1), do: 32
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v2, :layer1), do: 48
@@ -178,8 +179,8 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v2, :layer1), do: 160
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 1 :: 1 >>, :v2, :layer1), do: 176
   defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 0 :: 1 >>, :v2, :layer1), do: 192
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v2, :layer1), do: 224
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1 >>, :v2, :layer1), do: 256
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 1 :: 1 >>, :v2, :layer1), do: 224
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v2, :layer1), do: 256
 
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 0 :: 1, 1 :: 1 >>, :v2, :layer2), do: 8
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v2, :layer2), do: 16
@@ -193,8 +194,8 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v2, :layer2), do: 96
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 1 :: 1 >>, :v2, :layer2), do: 112
   defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 0 :: 1 >>, :v2, :layer2), do: 128
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v2, :layer2), do: 144
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1 >>, :v2, :layer2), do: 160
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 1 :: 1 >>, :v2, :layer2), do: 144
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v2, :layer2), do: 160
 
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 0 :: 1, 1 :: 1 >>, :v2, :layer3), do: 8
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v2, :layer3), do: 16
@@ -208,8 +209,8 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v2, :layer3), do: 96
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 1 :: 1 >>, :v2, :layer3), do: 112
   defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 0 :: 1 >>, :v2, :layer3), do: 128
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v2, :layer3), do: 144
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1 >>, :v2, :layer3), do: 160
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 1 :: 1 >>, :v2, :layer3), do: 144
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v2, :layer3), do: 160
 
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 0 :: 1, 1 :: 1 >>, :v2_5, :layer1), do: 32
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v2_5, :layer1), do: 48
@@ -223,8 +224,8 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v2_5, :layer1), do: 160
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 1 :: 1 >>, :v2_5, :layer1), do: 176
   defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 0 :: 1 >>, :v2_5, :layer1), do: 192
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v2_5, :layer1), do: 224
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1 >>, :v2_5, :layer1), do: 256
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 1 :: 1 >>, :v2_5, :layer1), do: 224
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v2_5, :layer1), do: 256
 
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 0 :: 1, 1 :: 1 >>, :v2_5, :layer2), do: 8
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v2_5, :layer2), do: 16
@@ -238,8 +239,8 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v2_5, :layer2), do: 96
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 1 :: 1 >>, :v2_5, :layer2), do: 112
   defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 0 :: 1 >>, :v2_5, :layer2), do: 128
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v2_5, :layer2), do: 144
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1 >>, :v2_5, :layer2), do: 160
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 1 :: 1 >>, :v2_5, :layer2), do: 144
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v2_5, :layer2), do: 160
 
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 0 :: 1, 1 :: 1 >>, :v2_5, :layer3), do: 8
   defp parse_bitrate(<< 0 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v2_5, :layer3), do: 16
@@ -253,8 +254,8 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 0 :: 1 >>, :v2_5, :layer3), do: 96
   defp parse_bitrate(<< 1 :: 1, 0 :: 1, 1 :: 1, 1 :: 1 >>, :v2_5, :layer3), do: 112
   defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 0 :: 1 >>, :v2_5, :layer3), do: 128
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v2_5, :layer3), do: 144
-  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 1 :: 1 >>, :v2_5, :layer3), do: 160
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 0 :: 1, 1 :: 1 >>, :v2_5, :layer3), do: 144
+  defp parse_bitrate(<< 1 :: 1, 1 :: 1, 1 :: 1, 0 :: 1 >>, :v2_5, :layer3), do: 160
 
 
   defp parse_sample_rate(<< 0 :: 1, 0 :: 1 >>, :v1), do: 44100
