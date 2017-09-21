@@ -335,7 +335,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
       let :queue, do: File.read!(@fixture_path) |> Kernel.binary_part(0, 3)
       let :spare, do: File.read!(@fixture_path) |> Kernel.binary_part(0, 3)
       let :payload, do: (File.read!(@fixture_path) |> Kernel.binary_part(3, File.stat!(@fixture_path).size - 3)) <> spare()
-      let :state, do: %{ queue: queue, caps: nil, frame_size: nil }
+      let :state, do: %{ queue: queue(), caps: nil, frame_size: nil }
 
       it "should return commands with caps before each change plus many buffers, one per each frame in the audio" do
         {{:ok, commands}, _state} = described_module().handle_process1(:sink, buffer(), nil, state())
