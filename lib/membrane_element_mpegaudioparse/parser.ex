@@ -42,7 +42,6 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
 
   # We have at least header.
   defp do_parse(payload, previous_caps, prev_frame_size, acc) when byte_size(payload) >= @mpeg_header_size do
-    IO.puts(:stderr, "do_parse: #{inspect payload}")
     << 0b11111111111   :: size(11),
        version         :: 2-bitstring,
        layer           :: 2-bitstring,
@@ -85,7 +84,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     invalid = caps |> Map.values |> Enum.any?(fn val -> val in [:invalid, :free] end)
 
     if invalid do
-        do_parse(force_skip_to_frame(payload), previous_caps, prev_frame_size, acc)
+      payload |> force_skip_to_frame |> do_parse(previous_caps, prev_frame_size, acc)
     else
       frame_size = if padding_enabled do
         ((144 * bitrate * 1000) |> div(sample_rate)) + 1
@@ -135,7 +134,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     size = byte_size(next_payload)
     case next_payload |> :binary.match(<<0xff>>) do
       {pos, _len} ->
-        IO.puts(:stderr, inspect binary_part(payload, 0, pos + 1))
+        debug("Dropped bytes: #{inspect binary_part(payload, 0, pos + 1)}")
         next_payload |> binary_part(pos, size - pos)
       :nomatch   -> << >>
     end
