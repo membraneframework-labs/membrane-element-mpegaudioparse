@@ -41,7 +41,8 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   defp do_parse(<< >>, previous_caps, prev_frame_size, acc), do: {:ok, acc, << >>, previous_caps, prev_frame_size}
 
   # We have at least header.
-  defp do_parse(payload, previous_caps, prev_frame_size, acc) when byte_size(payload) >= @mpeg_header_size do
+  defp do_parse(payload, previous_caps, prev_frame_size, acc)
+  when byte_size(payload) >= @mpeg_header_size do
     << 0b11111111111   :: size(11),
        version         :: 2-bitstring,
        layer           :: 2-bitstring,
@@ -55,7 +56,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
        copyright       :: 1-bitstring,
        original        :: 1-bitstring,
        emphasis_mode   :: 2-bitstring,
-       rest :: bitstring >> = payload
+       _rest :: bitstring >> = payload
 
     version         = parse_version(version)
     layer           = parse_layer(layer)
@@ -81,41 +82,38 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
         emphasis_mode: parse_emphasis_mode(emphasis_mode),
       }
 
-    invalid = caps |> Map.values |> Enum.any?(fn val -> val in [:invalid, :free] end)
-
-    if invalid do
-      payload |> force_skip_to_frame |> do_parse(previous_caps, prev_frame_size, acc)
+    with {:invalid_frame, false} <- {:invalid_frame, caps |> Map.values |> Enum.any?(fn val -> val in [:invalid, :free] end)},
+         frame_size              <- caps |> calculate_frame_size,
+         {:full_frame, true, fs} <- {:full_frame, byte_size(payload) >= frame_size, frame_size},
+         # Check if `rest` can be a valid frame. If there's not enough bytes to perform check, assume it's ok
+         << frame_payload :: size(frame_size)-binary, rest :: bitstring >> <- payload,
+         {:invalid_frame, false} <- {:invalid_frame, byte_size(rest) >= 2 and not pre_check(rest)},
+         new_acc <- (if previous_caps != caps, do: [{:caps, {:source, caps}} | acc], else: acc)
+    do
+      frame_buffer = {:buffer, {:source, %Membrane.Buffer{payload: frame_payload}}}
+      do_parse(rest, caps, fs, [frame_buffer | new_acc])
     else
-      frame_size = if padding_enabled do
-        ((144 * bitrate * 1000) |> div(sample_rate)) + 1
-      else
-        (144 * bitrate * 1000) |> div(sample_rate)
-      end
-
-      if byte_size(payload) < frame_size do
+      {:invalid_frame, true} ->
+        payload |> force_skip_to_frame |> do_parse(previous_caps, prev_frame_size, acc)
+      {:full_frame, false, frame_size} ->
         {:ok, acc, payload, previous_caps, frame_size}
-      else
-        << frame_payload :: size(frame_size)-binary, rest :: bitstring >> = payload
-        if byte_size(rest) < 11 or pre_check(rest) do
-          acc = if previous_caps != caps do
-            [{:caps, {:source, caps}}|acc]
-          else
-            acc
-          end
-
-          frame_buffer = {:buffer, {:source, %Membrane.Buffer{payload: frame_payload}}}
-          do_parse(rest, caps, frame_size, [frame_buffer|acc])
-        else
-          # Next frame is not valid, so we got the frame size wrong. It means that we parsed random data
-          # that fitted MPEG Audio Header by accident. Let's look for another frame.
-          payload |> force_skip_to_frame |> do_parse(previous_caps, prev_frame_size, acc)
-        end
-      end
     end
   end
 
   defp do_parse(payload, previous_caps, prev_frame_size, acc) do
     {:ok, acc, payload, previous_caps, prev_frame_size}
+  end
+
+  defp calculate_frame_size(%MPEG{layer: :layer1, bitrate: bitrate, sample_rate: sample_rate, padding_enabled: padding_enabled}) do
+    # FrameLengthInBytes = (12 * BitRate / SampleRate + Padding) * 4
+    padding = if padding_enabled, do: 1, else: 0
+    12 |> Kernel.*(bitrate * 1000) |> div(sample_rate) |> Kernel.+(padding) |> Kernel.*(4)
+  end
+
+  defp calculate_frame_size(%MPEG{layer: _, bitrate: bitrate, sample_rate: sample_rate, padding_enabled: padding_enabled}) do
+    # FrameLengthInBytes = 144 * BitRate / SampleRate + Padding
+    padding = if padding_enabled, do: 1, else: 0
+    144 |> Kernel.*(bitrate * 1000) |> div(sample_rate) |> Kernel.+(padding)
   end
 
   defp pre_check(<< 0b11111111111 :: size(11), _ :: bitstring >>), do: true
