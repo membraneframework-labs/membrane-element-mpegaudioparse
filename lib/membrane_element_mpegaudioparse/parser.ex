@@ -38,6 +38,8 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     end
   end
 
+  def handle_caps(:sink, _caps, _options, state), do: {:ok, state}
+
   defp do_parse(<< >>, previous_caps, prev_frame_size, acc), do: {:ok, acc, << >>, previous_caps, prev_frame_size}
 
   # We have at least header.
@@ -61,6 +63,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     version         = parse_version(version)
     layer           = parse_layer(layer)
     channel_mode    = parse_channel_mode(channel_mode)
+    channels        = parse_channel_count channel_mode
     crc_enabled     = parse_crc_enabled(crc_enabled)
     bitrate         = parse_bitrate(bitrate, version, layer)
     sample_rate     = parse_sample_rate(sample_rate, version)
@@ -76,6 +79,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
         padding_enabled: padding_enabled,
         private: parse_private(private),
         channel_mode: channel_mode,
+        channels: channels,
         mode_extension: parse_mode_extension(mode_extension, channel_mode),
         copyright: parse_copyright(copyright),
         original: parse_original(original),
@@ -322,6 +326,10 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   defp parse_channel_mode(<< 0b11 :: size(2) >>), do: :single_channel
   defp parse_channel_mode(_), do: :invalid
 
+  defp parse_channel_count(:stereo), do: 2
+  defp parse_channel_count(:joint_stereo), do: 2
+  defp parse_channel_count(:dual_channel), do: 2
+  defp parse_channel_count(:single_channel), do: 1
 
   defp parse_mode_extension(_, :stereo), do: nil
   defp parse_mode_extension(_, :dual_channel), do: nil
