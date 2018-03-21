@@ -6,7 +6,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
 
   @fixture_commands [caps: {:source,
     %Membrane.Caps.Audio.MPEG{bitrate: 96, channel_mode: :single_channel,
-     channels: nil, copyright: false, crc_enabled: true, emphasis_mode: :none,
+     channels: 1, copyright: false, crc_enabled: true, emphasis_mode: :none,
      layer: :layer3, mode_extension: nil, original: true, padding_enabled: false,
      private: false, sample_rate: 44100, version: :v1}},
    buffer: {:source,
@@ -50,7 +50,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
        48, 23, 1, 228, 48, 60, 194, 152, 55, 211, 124, 43, 54>>}},
    caps: {:source,
     %Membrane.Caps.Audio.MPEG{bitrate: 96, channel_mode: :single_channel,
-     channels: nil, copyright: false, crc_enabled: true, emphasis_mode: :none,
+     channels: 1, copyright: false, crc_enabled: true, emphasis_mode: :none,
      layer: :layer3, mode_extension: nil, original: true, padding_enabled: true,
      private: false, sample_rate: 44100, version: :v1}},
    buffer: {:source,
@@ -77,7 +77,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
        255, 255, 255, 255, 127, 255, 255>>}},
    caps: {:source,
     %Membrane.Caps.Audio.MPEG{bitrate: 96, channel_mode: :single_channel,
-     channels: nil, copyright: false, crc_enabled: true, emphasis_mode: :none,
+     channels: 1, copyright: false, crc_enabled: true, emphasis_mode: :none,
      layer: :layer3, mode_extension: nil, original: true, padding_enabled: false,
      private: false, sample_rate: 44100, version: :v1}},
    buffer: {:source,
@@ -104,7 +104,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
        123, 150>>}},
    caps: {:source,
     %Membrane.Caps.Audio.MPEG{bitrate: 96, channel_mode: :single_channel,
-     channels: nil, copyright: false, crc_enabled: true, emphasis_mode: :none,
+     channels: 1, copyright: false, crc_enabled: true, emphasis_mode: :none,
      layer: :layer3, mode_extension: nil, original: true, padding_enabled: true,
      private: false, sample_rate: 44100, version: :v1}},
    buffer: {:source,
@@ -130,7 +130,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
        39, 200, 129, 162, 9, 44, 186, 93, 50, 47, 17, 111, 249, 186, 12>>}},
    caps: {:source,
     %Membrane.Caps.Audio.MPEG{bitrate: 96, channel_mode: :single_channel,
-     channels: nil, copyright: false, crc_enabled: true, emphasis_mode: :none,
+     channels: 1, copyright: false, crc_enabled: true, emphasis_mode: :none,
      layer: :layer3, mode_extension: nil, original: true, padding_enabled: false,
      private: false, sample_rate: 44100, version: :v1}},
    buffer: {:source,
@@ -281,7 +281,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
       it "should return state with caps set to the last caps" do
         {{:ok, _commands}, new_state} = described_module().handle_process1(:sink, buffer(), nil, state())
         expect(new_state[:caps]).to eq %Membrane.Caps.Audio.MPEG{bitrate: 96, channel_mode: :single_channel,
-         channels: nil, copyright: false, crc_enabled: true, emphasis_mode: :none,
+         channels: 1, copyright: false, crc_enabled: true, emphasis_mode: :none,
          layer: :layer3, mode_extension: nil, original: true, padding_enabled: false,
          private: false, sample_rate: 44100, version: :v1}
       end
@@ -324,7 +324,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
         it "should return state with caps set to the last caps" do
           {{:ok, _commands}, new_state} = described_module().handle_process1(:sink, buffer(), nil, state())
           expect(new_state[:caps]).to eq %Membrane.Caps.Audio.MPEG{bitrate: 96, channel_mode: :single_channel,
-           channels: nil, copyright: false, crc_enabled: true, emphasis_mode: :none,
+           channels: 1, copyright: false, crc_enabled: true, emphasis_mode: :none,
            layer: :layer3, mode_extension: nil, original: true, padding_enabled: false,
            private: false, sample_rate: 44100, version: :v1}
         end
@@ -368,7 +368,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
       it "should return state with caps set to the last caps" do
         {{:ok, _commands}, new_state} = described_module().handle_process1(:sink, buffer(), nil, state())
         expect(new_state[:caps]).to eq %Membrane.Caps.Audio.MPEG{bitrate: 96, channel_mode: :single_channel,
-         channels: nil, copyright: false, crc_enabled: true, emphasis_mode: :none,
+         channels: 1, copyright: false, crc_enabled: true, emphasis_mode: :none,
          layer: :layer3, mode_extension: nil, original: true, padding_enabled: false,
          private: false, sample_rate: 44100, version: :v1}
       end
