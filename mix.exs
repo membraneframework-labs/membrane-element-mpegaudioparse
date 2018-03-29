@@ -32,11 +32,10 @@ defmodule Membrane.Element.MPEGAudioParse.Mixfile do
 
   defp deps do
     [
-      # {:membrane_core, git: "git@github.com:membraneframework/membrane-core.git"},
-      {:membrane_core, path: "~/swmansion/membrane/core", override: true},
+      {:membrane_core, git: "git@github.com:membraneframework/membrane-core.git"},
       {:membrane_caps_audio_mpeg,
        git: "git@github.com:membraneframework/membrane-caps-audio-mpeg.git"},
-      {:espec, "~> 1.4.6", only: :test},
+      {:espec, "~> 1.5", only: :test},
       {:excoveralls, "~> 0.8", only: :test},
       {:ex_doc, "~> 0.18", only: :dev}
     ]
