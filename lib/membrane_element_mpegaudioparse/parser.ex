@@ -10,21 +10,35 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   }
 
   def_known_source_pads %{
-    :source => {:always, :pull, :any}
+    :source => {:always, :pull, MPEG}
+  }
+
+  def_options %{
+    skip_until_frame: [
+      type: :boolean,
+      description: """
+      When set to true parser will skip bytes until it finds a valid frame
+      Otherwise invalid frames will cause an error.
+      """,
+      required: false,
+      default: false
+    ]
   }
 
   # Private API
 
-  @doc false
-  def handle_init(_) do
+  @impl true
+  def handle_init(%__MODULE__{skip_until_frame: skip_flag}) do
     {:ok,
      %{
        queue: <<>>,
        caps: nil,
+       skip_until_frame: skip_flag,
        frame_size: @mpeg_header_size
      }}
   end
 
+  @impl true
   def handle_demand(
         :source,
         n_bufs,
@@ -36,28 +50,37 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     {{:ok, demand: {:sink, demanded_bytes}}, state}
   end
 
+  @impl true
   def handle_process1(
         :sink,
         %Membrane.Buffer{payload: payload},
         _params,
-        %{queue: queue, caps: caps, frame_size: frame_size} = state
+        %{queue: queue, caps: caps, frame_size: frame_size, skip_until_frame: skip_flag} = state
       ) do
-    data = (queue <> payload) |> skip_to_frame()
+    data =
+      if skip_flag do
+        (queue <> payload) |> skip_to_frame()
+      else
+        queue <> payload
+      end
 
-    case do_parse(data, caps, frame_size, []) do
+    case do_parse(data, caps, frame_size, skip_flag, []) do
       {:ok, commands, new_queue, new_caps, new_frame_size} ->
         {{:ok, commands |> Enum.reverse()},
          %{state | queue: new_queue, caps: new_caps, frame_size: new_frame_size}}
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
+  @impl true
   def handle_caps(:sink, _caps, _options, state), do: {:ok, state}
 
-  defp do_parse(<<>>, previous_caps, prev_frame_size, acc),
+  defp do_parse(<<>>, previous_caps, prev_frame_size, _, acc),
     do: {:ok, acc, <<>>, previous_caps, prev_frame_size}
 
   # We have at least header.
-  defp do_parse(payload, previous_caps, prev_frame_size, acc)
+  defp do_parse(<<0b11111111111::size(11), _::bitstring>> = payload, previous_caps, prev_frame_size, skip_flag, acc)
        when byte_size(payload) >= @mpeg_header_size do
     <<0b11111111111::size(11), version::2-bitstring, layer::2-bitstring, crc_enabled::1-bitstring,
       bitrate::4-bitstring, sample_rate::2-bitstring, padding_enabled::1-bitstring,
@@ -99,18 +122,30 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
          <<frame_payload::size(frame_size)-binary, rest::bitstring>> <- payload,
          {:invalid_frame, false} <- {:invalid_frame, byte_size(rest) >= 2 and not pre_check(rest)},
          new_acc <- if(previous_caps != caps, do: [{:caps, {:source, caps}} | acc], else: acc) do
+
       frame_buffer = {:buffer, {:source, %Membrane.Buffer{payload: frame_payload}}}
-      do_parse(rest, caps, fs, [frame_buffer | new_acc])
+      do_parse(rest, caps, fs, skip_flag, [frame_buffer | new_acc])
     else
       {:invalid_frame, true} ->
-        payload |> force_skip_to_frame |> do_parse(previous_caps, prev_frame_size, acc)
+        if skip_flag do
+          payload |> force_skip_to_frame |> do_parse(previous_caps, prev_frame_size, skip_flag, acc)
+        else
+          warn("Received invalid frame!")
+          {:error, {:invalid_frame, payload}}
+        end
 
       {:full_frame, false, frame_size} ->
         {:ok, acc, payload, previous_caps, frame_size}
     end
   end
 
-  defp do_parse(payload, previous_caps, prev_frame_size, acc) do
+  defp do_parse(payload, _, _, _, _)
+       when byte_size(payload) >= @mpeg_header_size do
+    warn("Received invalid frame!")
+    {:error, {:invalid_frame, payload}}
+  end
+
+  defp do_parse(payload, previous_caps, prev_frame_size, _, acc) do
     {:ok, acc, payload, previous_caps, prev_frame_size}
   end
 
