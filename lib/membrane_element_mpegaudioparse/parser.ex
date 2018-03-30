@@ -1,17 +1,18 @@
 defmodule Membrane.Element.MPEGAudioParse.Parser do
+  @moduledoc """
+  Parses and splits into frames MPEG-1 Part 3 audio streams
+
+  See `options/0` for available options
+  """
   use Membrane.Element.Base.Filter
   use Membrane.Mixins.Log, tags: :membrane_element_mpegaudioparse
   alias Membrane.Caps.Audio.MPEG
 
   @mpeg_header_size 4
 
-  def_known_sink_pads %{
-    :sink => {:always, {:pull, demand_in: :bytes}, :any}
-  }
+  def_known_sink_pads sink: {:always, {:pull, demand_in: :bytes}, :any}
 
-  def_known_source_pads %{
-    :source => {:always, :pull, MPEG}
-  }
+  def_known_source_pads source: {:always, :pull, MPEG}
 
   def_options %{
     skip_until_frame: [
@@ -20,7 +21,6 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
       When set to true parser will skip bytes until it finds a valid frame
       Otherwise invalid frames will cause an error.
       """,
-      required: false,
       default: false
     ]
   }
