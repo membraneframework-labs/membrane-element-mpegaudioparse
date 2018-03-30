@@ -16,7 +16,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
 
   def_options %{
     skip_until_frame: [
-      type: :boolean,
+      type: boolean(),
       description: """
       When set to true parser will skip bytes until it finds a valid frame
       Otherwise invalid frames will cause an error.
