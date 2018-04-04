@@ -20,9 +20,7 @@ defmodule Membrane.Element.MPEGAudioParse.Mixfile do
 
   def application do
     [
-      applications: [
-        :membrane_core
-      ],
+      extra_applications: [],
       mod: {Membrane.Element.MPEGAudioParse, []}
     ]
   end

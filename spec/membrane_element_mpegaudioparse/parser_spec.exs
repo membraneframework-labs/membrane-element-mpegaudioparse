@@ -380,10 +380,9 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
       context "and skip_until_frame option is false" do
         let :state, do: %{queue: queue(), caps: nil, frame_size: nil, skip_until_frame: false}
 
-        it "should return commands with caps before each change plus many buffers, one per each frame in the audio" do
-          result = described_module().handle_process1(:sink, buffer(), nil, state())
-          expect(result) |> to(be_error_result())
-          expect(result) |> to(match_pattern {:error, {:invalid_frame, _}})
+        it "should raise an exception" do
+          lazy_result = fn -> described_module().handle_process1(:sink, buffer(), nil, state()) end
+          expect(lazy_result) |> to(raise_exception())
         end
       end
     end
