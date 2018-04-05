@@ -15,16 +15,14 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
 
   def_known_source_pads source: {:always, :pull, MPEG}
 
-  def_options %{
-    skip_until_frame: [
-      type: boolean(),
-      description: """
-      When set to true parser will skip bytes until it finds a valid frame
-      Otherwise invalid frames will cause an error.
-      """,
-      default: false
-    ]
-  }
+  def_options skip_until_frame: [
+                type: :boolean,
+                description: """
+                When set to true parser will skip bytes until it finds a valid frame.
+                Otherwise invalid frames will cause an error.
+                """,
+                default: false
+              ]
 
   # Private API
 
