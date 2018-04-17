@@ -381,7 +381,10 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
         let :state, do: %{queue: queue(), caps: nil, frame_size: nil, skip_until_frame: false}
 
         it "should raise an exception" do
-          lazy_result = fn -> described_module().handle_process1(:sink, buffer(), nil, state()) end
+          lazy_result = fn ->
+            described_module().handle_process1(:sink, buffer(), nil, state())
+          end
+
           expect(lazy_result) |> to(raise_exception())
         end
       end

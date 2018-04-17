@@ -13,7 +13,7 @@ defmodule Membrane.Element.MPEGAudioParse.Mixfile do
       licenses: ["MIT"],
       name: "Membrane Element: MPEGAudioParse",
       source_url: "git://github.com:membraneframework/membrane-element-mpegaudioparse.git",
-      preferred_cli_env: [espec: :test],
+      preferred_cli_env: [espec: :test, format: :test],
       deps: deps()
     ]
   end
