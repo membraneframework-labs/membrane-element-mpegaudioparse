@@ -16,7 +16,3 @@ Then add the following line to your `applications` in `mix.exs`.
 ```elixir
 :membrane_element_mpegaudioparse
 ```
-
-# Authors
-
-Marcin Lewandowski
