@@ -153,16 +153,16 @@ defmodule Membrane.Element.MPEGAudioParse.Parser.Helper do
 
   def parse_bitrate(_, _, _), do: :invalid
 
-  def parse_sample_rate(<<0b00::size(2)>>, :v1), do: 44100
-  def parse_sample_rate(<<0b01::size(2)>>, :v1), do: 48000
-  def parse_sample_rate(<<0b10::size(2)>>, :v1), do: 32000
+  def parse_sample_rate(<<0b00::size(2)>>, :v1), do: 44_100
+  def parse_sample_rate(<<0b01::size(2)>>, :v1), do: 48_000
+  def parse_sample_rate(<<0b10::size(2)>>, :v1), do: 32_000
 
-  def parse_sample_rate(<<0b00::size(2)>>, :v2), do: 22050
-  def parse_sample_rate(<<0b01::size(2)>>, :v2), do: 24000
-  def parse_sample_rate(<<0b10::size(2)>>, :v2), do: 16000
+  def parse_sample_rate(<<0b00::size(2)>>, :v2), do: 22_050
+  def parse_sample_rate(<<0b01::size(2)>>, :v2), do: 24_000
+  def parse_sample_rate(<<0b10::size(2)>>, :v2), do: 16_000
 
-  def parse_sample_rate(<<0b00::size(2)>>, :v2_5), do: 11050
-  def parse_sample_rate(<<0b01::size(2)>>, :v2_5), do: 12000
+  def parse_sample_rate(<<0b00::size(2)>>, :v2_5), do: 11_050
+  def parse_sample_rate(<<0b01::size(2)>>, :v2_5), do: 12_000
   def parse_sample_rate(<<0b10::size(2)>>, :v2_5), do: 8000
   def parse_sample_rate(_, _), do: :invalid
 
