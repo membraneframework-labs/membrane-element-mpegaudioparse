@@ -5,15 +5,15 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   See `options/0` for available options
   """
   use Membrane.Element.Base.Filter
-  use Membrane.Mixins.Log, tags: :membrane_element_mpegaudioparse
+  use Membrane.Log, tags: :membrane_element_mpegaudioparse
   alias Membrane.Caps.Audio.MPEG
   import __MODULE__.Helper
 
   @mpeg_header_size 4
 
-  def_known_sink_pads sink: {:always, {:pull, demand_in: :bytes}, :any}
+  def_input_pads input: [caps: :any, demand_unit: :bytes]
 
-  def_known_source_pads source: {:always, :pull, MPEG}
+  def_output_pads output: [caps: MPEG]
 
   def_options skip_until_frame: [
                 type: :boolean,
@@ -38,14 +38,14 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   end
 
   @impl true
-  def handle_demand(:source, n_bufs, :buffers, _params, state) do
+  def handle_demand(:output, n_bufs, :buffers, _params, state) do
     %{queue: queue, frame_size: frame_size} = state
     demanded_bytes = frame_size * n_bufs - byte_size(queue) + @mpeg_header_size
-    {{:ok, demand: {:sink, demanded_bytes}}, state}
+    {{:ok, demand: {:input, demanded_bytes}}, state}
   end
 
   @impl true
-  def handle_process1(:sink, %Membrane.Buffer{payload: payload}, _params, state) do
+  def handle_process(:input, %Membrane.Buffer{payload: payload}, _params, state) do
     %{queue: queue, caps: caps, frame_size: frame_size, skip_until_frame: skip_flag} = state
 
     data =
@@ -69,7 +69,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   end
 
   @impl true
-  def handle_caps(:sink, _caps, _options, state), do: {:ok, state}
+  def handle_caps(:input, _caps, _options, state), do: {:ok, state}
 
   defp do_parse(<<>>, previous_caps, prev_frame_size, _, acc),
     do: {:ok, acc, <<>>, previous_caps, prev_frame_size}
@@ -121,12 +121,12 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
          :ok <- validate_frame_start(rest) do
       new_acc =
         if previous_caps != caps do
-          [{:caps, {:source, caps}} | acc]
+          [{:caps, {:output, caps}} | acc]
         else
           acc
         end
 
-      frame_buffer = {:buffer, {:source, %Membrane.Buffer{payload: frame_payload}}}
+      frame_buffer = {:buffer, {:output, %Membrane.Buffer{payload: frame_payload}}}
       do_parse(rest, caps, frame_size, skip_flag, [frame_buffer | new_acc])
     else
       {:error, :invalid_frame} ->

@@ -1,17 +1,20 @@
 defmodule Membrane.Element.MPEGAudioParse.Mixfile do
   use Mix.Project
 
+  @version "0.1.1"
+  @github_url "https://github.com/membraneframework/membrane-element-mpegaudioparse"
+
   def project do
     [
       app: :membrane_element_mpegaudioparse,
       compilers: Mix.compilers(),
-      version: "0.1.0",
-      elixir: "~> 1.6",
+      version: @version,
+      elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Membrane Multimedia Framework (MPEGAudioParse Element)",
       package: package(),
       name: "Membrane Element: MPEGAudioParse",
-      source_url: link(),
+      source_url: @github_url,
       docs: docs(),
       preferred_cli_env: [espec: :test, format: :test],
       deps: deps()
@@ -28,14 +31,11 @@ defmodule Membrane.Element.MPEGAudioParse.Mixfile do
   defp elixirc_paths(:test), do: ["lib", "spec/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  defp link do
-    "https://github.com/membraneframework/membrane-element-mpegaudioparse"
-  end
-
   defp docs do
     [
       main: "readme",
-      extras: ["README.md"]
+      extras: ["README.md"],
+      source_ref: "v#{@version}"
     ]
   end
 
@@ -44,7 +44,7 @@ defmodule Membrane.Element.MPEGAudioParse.Mixfile do
       maintainers: ["Membrane Team"],
       licenses: ["Apache 2.0"],
       links: %{
-        "GitHub" => link(),
+        "GitHub" => @github_url,
         "Membrane Framework Homepage" => "https://membraneframework.org"
       }
     ]
@@ -52,8 +52,8 @@ defmodule Membrane.Element.MPEGAudioParse.Mixfile do
 
   defp deps do
     [
-      {:ex_doc, "~> 0.18", only: :dev, runtime: false},
-      {:membrane_core, "~> 0.1"},
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false},
+      {:membrane_core, github: "membraneframework/membrane-core", branch: "pre-review"},
       {:membrane_caps_audio_mpeg, "~> 0.1"},
       {:espec, "~> 1.5", only: :test}
     ]
