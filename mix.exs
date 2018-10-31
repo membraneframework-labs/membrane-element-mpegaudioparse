@@ -53,7 +53,7 @@ defmodule Membrane.Element.MPEGAudioParse.Mixfile do
   defp deps do
     [
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
-      {:membrane_core, github: "membraneframework/membrane-core", branch: "pre-review"},
+      {:membrane_core, github: "membraneframework/membrane-core"},
       {:membrane_caps_audio_mpeg, "~> 0.1"},
       {:espec, "~> 1.5", only: :test}
     ]
