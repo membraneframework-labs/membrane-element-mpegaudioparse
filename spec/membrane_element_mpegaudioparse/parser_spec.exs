@@ -37,9 +37,9 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
   @fixture_path "#{__DIR__}/../fixtures/mpeg-audio-cbr-joint-100ms.mp3"
 
   @fixture_commands [
-    caps: {:source, @caps_no_padding},
+    caps: {:output, @caps_no_padding},
     buffer:
-      {:source,
+      {:output,
        %Membrane.Buffer{
          metadata: %{},
          payload:
@@ -59,7 +59,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>
        }},
     buffer:
-      {:source,
+      {:output,
        %Membrane.Buffer{
          metadata: %{},
          payload:
@@ -81,9 +81,9 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
              48, 31, 128, 211, 48, 33, 128, 211, 48, 119, 130, 43, 48, 23, 1, 228, 48, 60, 194,
              152, 55, 211, 124, 43, 54>>
        }},
-    caps: {:source, @caps_with_padding},
+    caps: {:output, @caps_with_padding},
     buffer:
-      {:source,
+      {:output,
        %Membrane.Buffer{
          metadata: %{},
          payload:
@@ -106,9 +106,9 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
              125, 77, 255, 183, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 127, 255,
              255>>
        }},
-    caps: {:source, @caps_no_padding},
+    caps: {:output, @caps_no_padding},
     buffer:
-      {:source,
+      {:output,
        %Membrane.Buffer{
          metadata: %{},
          payload:
@@ -130,9 +130,9 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
              24, 179, 202, 162, 136, 33, 203, 32, 232, 162, 206, 96, 23, 0, 138, 96, 69, 130, 94,
              97, 30, 131, 222, 96, 249, 9, 72, 98, 113, 19, 20, 119, 176, 123, 150>>
        }},
-    caps: {:source, @caps_with_padding},
+    caps: {:output, @caps_with_padding},
     buffer:
-      {:source,
+      {:output,
        %Membrane.Buffer{
          metadata: %{},
          payload:
@@ -154,9 +154,9 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
              204, 16, 65, 205, 50, 54, 50, 165, 252, 136, 12, 217, 23, 39, 200, 129, 162, 9, 44,
              186, 93, 50, 47, 17, 111, 249, 186, 12>>
        }},
-    caps: {:source, @caps_no_padding},
+    caps: {:output, @caps_no_padding},
     buffer:
-      {:source,
+      {:output,
        %Membrane.Buffer{
          metadata: %{},
          payload:
@@ -195,7 +195,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
     expect(total_size) |> to(eq size)
   end
 
-  describe ".handle_process1/4" do
+  describe ".handle_process/4" do
     let :buffer, do: %Membrane.Buffer{payload: payload()}
     let :state, do: %{queue: queue(), caps: nil, frame_size: nil, skip_until_frame: false}
 
@@ -206,21 +206,21 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
 
         it "should return no commands" do
           {{:ok, commands}, _state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(commands) |> to(eq [])
         end
 
         it "should store read data in the queue" do
           {{:ok, _commands}, new_state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(new_state[:queue]) |> to(eq payload())
         end
 
         it "should keep caps in the state untouched" do
           {{:ok, _commands}, new_state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(new_state[:caps]) |> to(be_nil())
         end
@@ -232,21 +232,21 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
 
         it "should return no commands" do
           {{:ok, commands}, _state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(commands) |> to(eq [])
         end
 
         it "should append read data to the queue" do
           {{:ok, _commands}, new_state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(new_state[:queue]) |> to(eq queue() <> payload())
         end
 
         it "should keep caps in the state untouched" do
           {{:ok, _commands}, new_state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(new_state[:caps]) |> to(be_nil())
         end
@@ -260,21 +260,21 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
 
         it "should return no commands" do
           {{:ok, commands}, _state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(commands) |> to(eq [])
         end
 
         it "should store read data in the queue" do
           {{:ok, _commands}, new_state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(new_state[:queue]) |> to(eq payload())
         end
 
         it "should keep caps in the state untouched" do
           {{:ok, _commands}, new_state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(new_state[:caps]) |> to(be_nil())
         end
@@ -286,21 +286,21 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
 
         it "should return no commands" do
           {{:ok, commands}, _state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(commands) |> to(eq [])
         end
 
         it "should append read data to the queue" do
           {{:ok, _commands}, new_state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(new_state[:queue]) |> to(eq queue() <> payload())
         end
 
         it "should keep caps in the state untouched" do
           {{:ok, _commands}, new_state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(new_state[:caps]) |> to(be_nil())
         end
@@ -313,28 +313,28 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
 
       it "should return commands with caps before each change plus many buffers, one per each frame in the audio" do
         {{:ok, commands}, _state} =
-          described_module().handle_process1(:sink, buffer(), nil, state())
+          described_module().handle_process(:input, buffer(), nil, state())
 
         expect(commands) |> to(eq @fixture_commands)
       end
 
       it "should return state with empty queue" do
         {{:ok, _commands}, new_state} =
-          described_module().handle_process1(:sink, buffer(), nil, state())
+          described_module().handle_process(:input, buffer(), nil, state())
 
         expect(new_state[:queue]) |> to(eq <<>>)
       end
 
       it "should return commands for which total payload size of buffers is equal to the processed payload" do
         {{:ok, commands}, _state} =
-          described_module().handle_process1(:sink, buffer(), nil, state())
+          described_module().handle_process(:input, buffer(), nil, state())
 
         expect_total_buffers_size(commands, byte_size(payload()))
       end
 
       it "should return state with caps set to the last caps" do
         {{:ok, _commands}, new_state} =
-          described_module().handle_process1(:sink, buffer(), nil, state())
+          described_module().handle_process(:input, buffer(), nil, state())
 
         expect(new_state[:caps]) |> to(eq @caps_no_padding)
       end
@@ -350,28 +350,28 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
 
         it "should return commands with caps before each change plus many buffers, one per each frame in the audio" do
           {{:ok, commands}, _state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(commands) |> to(eq @fixture_commands)
         end
 
         it "should return state with empty queue" do
           {{:ok, _commands}, new_state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(new_state[:queue]) |> to(eq <<>>)
         end
 
         it "should return commands for which total payload size of buffers is equal to the valid payload (without garbage)" do
           {{:ok, commands}, _state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect_total_buffers_size(commands, byte_size(payload()) - byte_size(garbage()))
         end
 
         it "should return state with caps set to the last caps" do
           {{:ok, _commands}, new_state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(new_state[:caps]) |> to(eq @caps_no_padding)
         end
@@ -382,7 +382,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
 
         it "should raise an exception" do
           lazy_result = fn ->
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
           end
 
           expect(lazy_result) |> to(raise_exception())
@@ -398,28 +398,28 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
 
         it "should return commands with caps before each change plus many buffers, one per each frame in the audio" do
           {{:ok, commands}, _state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(commands) |> to(eq @fixture_commands)
         end
 
         it "should return commands for which total payload size of buffers is equal to the processed payload minus size of spare bytes" do
           {{:ok, commands}, _state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect_total_buffers_size(commands, byte_size(payload()) - byte_size(spare()))
         end
 
         it "should return state with queue set to the spare bytes" do
           {{:ok, _commands}, new_state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(new_state[:queue]) |> to(eq spare())
         end
 
         it "should return state with caps set to the last caps" do
           {{:ok, _commands}, new_state} =
-            described_module().handle_process1(:sink, buffer(), nil, state())
+            described_module().handle_process(:input, buffer(), nil, state())
 
           expect(new_state[:caps]) |> to(eq @caps_no_padding)
         end
@@ -436,14 +436,14 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
 
       it "should return commands with caps before each change plus many buffers, one per each frame in the audio" do
         {{:ok, commands}, _state} =
-          described_module().handle_process1(:sink, buffer(), nil, state())
+          described_module().handle_process(:input, buffer(), nil, state())
 
         expect(commands) |> to(eq @fixture_commands)
       end
 
       it "should return commands for which total payload size of buffers is equal to the processed payload (including queue) minus size of spare bytes" do
         {{:ok, commands}, _state} =
-          described_module().handle_process1(:sink, buffer(), nil, state())
+          described_module().handle_process(:input, buffer(), nil, state())
 
         total_size =
           commands
@@ -463,14 +463,14 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
 
       it "should return state with queue set to the spare bytes" do
         {{:ok, _commands}, new_state} =
-          described_module().handle_process1(:sink, buffer(), nil, state())
+          described_module().handle_process(:input, buffer(), nil, state())
 
         expect(new_state[:queue]) |> to(eq spare())
       end
 
       it "should return state with caps set to the last caps" do
         {{:ok, _commands}, new_state} =
-          described_module().handle_process1(:sink, buffer(), nil, state())
+          described_module().handle_process(:input, buffer(), nil, state())
 
         expect(new_state[:caps]) |> to(eq @caps_no_padding)
       end
