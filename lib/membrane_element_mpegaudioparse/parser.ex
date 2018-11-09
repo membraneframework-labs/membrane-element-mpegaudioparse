@@ -18,13 +18,11 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   def_options skip_until_frame: [
                 type: :boolean,
                 description: """
-                When set to true parser will skip bytes until it finds a valid frame.
+                When set to true the parser will skip bytes until it finds a valid frame.
                 Otherwise invalid frames will cause an error.
                 """,
                 default: false
               ]
-
-  # Private API
 
   @impl true
   def handle_init(%__MODULE__{skip_until_frame: skip_flag}) do
@@ -56,9 +54,9 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
       end
 
     case do_parse(data, caps, frame_size, skip_flag, []) do
-      {:ok, commands, new_queue, new_caps, new_frame_size} ->
-        {{:ok, commands |> Enum.reverse()},
-         %{state | queue: new_queue, caps: new_caps, frame_size: new_frame_size}}
+      {:ok, actions, new_queue, new_caps, new_frame_size} ->
+        actions = [{:redemand, :output} | actions] |> Enum.reverse()
+        {{:ok, actions}, %{state | queue: new_queue, caps: new_caps, frame_size: new_frame_size}}
 
       {:error, reason} ->
         raise """
@@ -115,7 +113,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     }
 
     with :ok <- validate_caps(caps),
-         frame_size <- calculate_frame_size(caps),
+         frame_size = MPEG.frame_size(caps),
          :full_frame <- verify_payload_size(payload, frame_size),
          <<frame_payload::size(frame_size)-binary, rest::bitstring>> <- payload,
          :ok <- validate_frame_start(rest) do
@@ -167,28 +165,6 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     else
       {:partial_frame, frame_size}
     end
-  end
-
-  defp calculate_frame_size(%MPEG{
-         layer: :layer1,
-         bitrate: bitrate,
-         sample_rate: sample_rate,
-         padding_enabled: padding_enabled
-       }) do
-    # FrameLengthInBytes = (12 * BitRate / SampleRate + Padding) * 4
-    padding = if padding_enabled, do: 1, else: 0
-    12 |> Kernel.*(bitrate * 1000) |> div(sample_rate) |> Kernel.+(padding) |> Kernel.*(4)
-  end
-
-  defp calculate_frame_size(%MPEG{
-         layer: _,
-         bitrate: bitrate,
-         sample_rate: sample_rate,
-         padding_enabled: padding_enabled
-       }) do
-    # FrameLengthInBytes = 144 * BitRate / SampleRate + Padding
-    padding = if padding_enabled, do: 1, else: 0
-    144 |> Kernel.*(bitrate * 1000) |> div(sample_rate) |> Kernel.+(padding)
   end
 
   # Check if argument can be a valid frame. If there's not enough bytes to perform check, assume it's ok
