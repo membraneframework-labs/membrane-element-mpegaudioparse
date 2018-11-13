@@ -4,10 +4,13 @@ defmodule Membrane.Element.MPEGAudioParse.Parser.Helper do
 
   @spec parse_header(binary) :: {:ok, MPEG.t(), binary} | {:error, :invalid | :unsupported}
   def parse_header(header) do
-    with <<0b11111111111::size(11), version::size(2), layer::size(2), crc_enabled::size(1),
-           bitrate::size(4), sample_rate::size(2), padding_enabled::size(1), private::size(1),
-           channel_mode::size(2), mode_extension::size(2), copyright::size(1), original::size(1),
-           emphasis_mode::size(2), rest::bitstring>> <- header,
+    with <<0b11111111111::size(11), version::bitstring-size(2), layer::bitstring-size(2),
+           crc_enabled::bitstring-size(1), bitrate::bitstring-size(4),
+           sample_rate::bitstring-size(2), padding_enabled::bitstring-size(1),
+           private::bitstring-size(1), channel_mode::bitstring-size(2),
+           mode_extension::bitstring-size(2), copyright::bitstring-size(1),
+           original::bitstring-size(1), emphasis_mode::bitstring-size(2),
+           rest::bitstring>> <- header,
          {:ok, version} <- parse_version(version),
          {:ok, layer} <- parse_layer(layer),
          {:ok, channel_mode} <- parse_channel_mode(channel_mode),
