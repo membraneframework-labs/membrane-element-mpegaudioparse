@@ -50,8 +50,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     # to calculate its size. The estimation may not be 100% accurate if the frame size
     # varies between frames (and usually it does because the padding is present
     # only in some of the frames)
-    demanded_bytes =
-      (frame_size + @mpeg_header_size) * n_bufs - byte_size(queue) + @mpeg_header_size
+    demanded_bytes = frame_size * n_bufs - byte_size(queue) + @mpeg_header_size
 
     {{:ok, demand: {:input, demanded_bytes}}, state}
   end
@@ -82,7 +81,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     with {:ok, caps} <- parse_header(payload),
          frame_size = MPEG.frame_size(caps),
          :full_frame <- verify_payload_size(payload, frame_size),
-         <<frame_payload::size(frame_size)-binary, rest::bitstring>> <- payload,
+         <<frame_payload::size(frame_size)-binary, rest::bitstring>> = payload,
          :ok <- validate_frame_start(rest) do
       acc =
         if previous_caps != caps do
@@ -127,7 +126,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
 
   # Check if argument can be a valid frame. If there's not enough bytes to perform check, assume it's ok
   defp validate_frame_start(<<0b11111111111::size(11), _::bitstring>>), do: :ok
-  defp validate_frame_start(<<_::size(11), _::bitstring>>), do: {:error, :invalid_frame}
+  defp validate_frame_start(<<_::size(11), _::bitstring>>), do: {:error, :invalid}
   defp validate_frame_start(_), do: :ok
 
   defp force_skip_to_frame(<<>>), do: <<>>
