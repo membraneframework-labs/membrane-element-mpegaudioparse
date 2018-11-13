@@ -2,15 +2,14 @@ defmodule Membrane.Element.MPEGAudioParse.Parser.Helper do
   @moduledoc false
   alias Membrane.Caps.Audio.MPEG
 
-  @spec parse_header(binary) :: {:ok, MPEG.t(), binary} | {:error, :invalid | :unsupported}
+  @spec parse_header(binary) :: {:ok, MPEG.t()} | {:error, :invalid | :unsupported}
   def parse_header(header) do
     with <<0b11111111111::size(11), version::bitstring-size(2), layer::bitstring-size(2),
            crc_enabled::bitstring-size(1), bitrate::bitstring-size(4),
            sample_rate::bitstring-size(2), padding_enabled::bitstring-size(1),
            private::bitstring-size(1), channel_mode::bitstring-size(2),
            mode_extension::bitstring-size(2), copyright::bitstring-size(1),
-           original::bitstring-size(1), emphasis_mode::bitstring-size(2),
-           rest::bitstring>> <- header,
+           original::bitstring-size(1), emphasis_mode::bitstring-size(2), _::binary>> <- header,
          {:ok, version} <- parse_version(version),
          {:ok, layer} <- parse_layer(layer),
          {:ok, channel_mode} <- parse_channel_mode(channel_mode),
@@ -39,7 +38,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser.Helper do
          copyright: copyright,
          original: original,
          emphasis_mode: emphasis_mode
-       }, rest}
+       }}
     else
       data when is_binary(data) -> {:error, :invalid}
       {:ok, :free} -> {:error, :unsupported}

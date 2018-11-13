@@ -62,7 +62,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     caps = ctx.pads.output.caps
 
     case do_parse(queue <> payload, [], caps, frame_size, skip_flag) do
-      {:ok, new_queue, actions, new_caps, new_frame_size} ->
+      {:ok, new_queue, actions, _caps, new_frame_size} ->
         {{:ok, actions}, %{state | queue: new_queue, frame_size: new_frame_size}}
 
       {:error, reason} ->
@@ -79,7 +79,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   # We have at least header.
   defp do_parse(payload, acc, previous_caps, prev_frame_size, skip_flag)
        when byte_size(payload) >= @mpeg_header_size do
-    with {:ok, caps, rest} <- parse_header(payload),
+    with {:ok, caps} <- parse_header(payload),
          frame_size = MPEG.frame_size(caps),
          :full_frame <- verify_payload_size(payload, frame_size),
          <<frame_payload::size(frame_size)-binary, rest::bitstring>> <- payload,
