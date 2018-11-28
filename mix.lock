@@ -12,7 +12,7 @@
   "makeup": {:hex, :makeup, "0.5.5", "9e08dfc45280c5684d771ad58159f718a7b5788596099bdfb0284597d368a882", [:mix], [{:nimble_parsec, "~> 0.4", [hex: :nimble_parsec, repo: "hexpm", optional: false]}], "hexpm"},
   "makeup_elixir": {:hex, :makeup_elixir, "0.10.0", "0f09c2ddf352887a956d84f8f7e702111122ca32fbbc84c2f0569b8b65cbf7fa", [:mix], [{:makeup, "~> 0.5.5", [hex: :makeup, repo: "hexpm", optional: false]}], "hexpm"},
   "meck": {:hex, :meck, "0.8.12", "1f7b1a9f5d12c511848fec26bbefd09a21e1432eadb8982d9a8aceb9891a3cf2", [:rebar3], [], "hexpm"},
-  "membrane_caps_audio_mpeg": {:hex, :membrane_caps_audio_mpeg, "0.1.0", "e2b48d9ff852988e5be6254b9dd32d8f4695262b44160f6a796e847246a99828", [:mix], [], "hexpm"},
+  "membrane_caps_audio_mpeg": {:hex, :membrane_caps_audio_mpeg, "0.2.0", "9cf9a63f03e25b31cf31445325aa68e60a07d36ee1e759caa1422fa45df49367", [:mix], [], "hexpm"},
   "membrane_core": {:hex, :membrane_core, "0.2.0", "de05223ce50661518d47ac9bfb79854483490d8322876724c86cef3aa806b66c", [:mix], [{:bunch, "~> 0.1.2", [hex: :bunch, repo: "hexpm", optional: false]}, {:qex, "~> 0.3", [hex: :qex, repo: "hexpm", optional: false]}], "hexpm"},
   "metrics": {:hex, :metrics, "1.0.1", "25f094dea2cda98213cecc3aeff09e940299d950904393b2a29d191c346a8486", [:rebar3], [], "hexpm"},
   "mimerl": {:hex, :mimerl, "1.0.2", "993f9b0e084083405ed8252b99460c4f0563e41729ab42d9074fd5e52439be88", [:rebar3], [], "hexpm"},

@@ -9,7 +9,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   alias Membrane.Caps.Audio.MPEG
   import __MODULE__.Helper
 
-  @mpeg_header_size 4
+  @mpeg_header_size MPEG.header_size()
 
   def_input_pads input: [caps: :any, demand_unit: :bytes]
 
@@ -18,13 +18,11 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   def_options skip_until_frame: [
                 type: :boolean,
                 description: """
-                When set to true parser will skip bytes until it finds a valid frame.
+                When set to true the parser will skip bytes until it finds a valid frame.
                 Otherwise invalid frames will cause an error.
                 """,
                 default: false
               ]
-
-  # Private API
 
   @impl true
   def handle_init(%__MODULE__{skip_until_frame: skip_flag}) do
@@ -33,32 +31,38 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
        queue: <<>>,
        caps: nil,
        skip_until_frame: skip_flag,
-       frame_size: @mpeg_header_size
+       # Start with the smallest MPEG frame
+       frame_size:
+         MPEG.frame_size(%MPEG{
+           version: :v1,
+           layer: :layer1,
+           bitrate: 32,
+           sample_rate: 48_000,
+           padding_enabled: false
+         })
      }}
   end
 
   @impl true
-  def handle_demand(:output, n_bufs, :buffers, _params, state) do
+  def handle_demand(:output, n_bufs, :buffers, _ctx, state) do
     %{queue: queue, frame_size: frame_size} = state
+    # try to demand enough bytes for `n_bufs` frames + header of the next frame
+    # to calculate its size. The estimation may not be 100% accurate if the frame size
+    # varies between frames (and usually it does because the padding is present
+    # only in some of the frames)
     demanded_bytes = frame_size * n_bufs - byte_size(queue) + @mpeg_header_size
+
     {{:ok, demand: {:input, demanded_bytes}}, state}
   end
 
   @impl true
-  def handle_process(:input, %Membrane.Buffer{payload: payload}, _params, state) do
-    %{queue: queue, caps: caps, frame_size: frame_size, skip_until_frame: skip_flag} = state
+  def handle_process(:input, %Membrane.Buffer{payload: payload}, ctx, state) do
+    %{queue: queue, frame_size: frame_size, skip_until_frame: skip_flag} = state
+    caps = ctx.pads.output.caps
 
-    data =
-      if skip_flag do
-        (queue <> payload) |> skip_to_frame()
-      else
-        queue <> payload
-      end
-
-    case do_parse(data, caps, frame_size, skip_flag, []) do
-      {:ok, commands, new_queue, new_caps, new_frame_size} ->
-        {{:ok, commands |> Enum.reverse()},
-         %{state | queue: new_queue, caps: new_caps, frame_size: new_frame_size}}
+    case do_parse(queue <> payload, [], caps, frame_size, skip_flag) do
+      {:ok, new_queue, actions, _caps, new_frame_size} ->
+        {{:ok, actions}, %{state | queue: new_queue, frame_size: new_frame_size}}
 
       {:error, reason} ->
         raise """
@@ -69,57 +73,17 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
   end
 
   @impl true
-  def handle_caps(:input, _caps, _options, state), do: {:ok, state}
-
-  defp do_parse(<<>>, previous_caps, prev_frame_size, _, acc),
-    do: {:ok, acc, <<>>, previous_caps, prev_frame_size}
+  def handle_caps(:input, _caps, _ctx, state), do: {:ok, state}
 
   # We have at least header.
-  defp do_parse(
-         <<0b11111111111::size(11), _::bitstring>> = payload,
-         previous_caps,
-         prev_frame_size,
-         skip_flag,
-         acc
-       )
+  defp do_parse(payload, acc, previous_caps, prev_frame_size, skip_flag)
        when byte_size(payload) >= @mpeg_header_size do
-    <<0b11111111111::size(11), version::2-bitstring, layer::2-bitstring, crc_enabled::1-bitstring,
-      bitrate::4-bitstring, sample_rate::2-bitstring, padding_enabled::1-bitstring,
-      private::1-bitstring, channel_mode::2-bitstring, mode_extension::2-bitstring,
-      copyright::1-bitstring, original::1-bitstring, emphasis_mode::2-bitstring,
-      _rest::bitstring>> = payload
-
-    version = parse_version(version)
-    layer = parse_layer(layer)
-    channel_mode = parse_channel_mode(channel_mode)
-    channels = parse_channel_count(channel_mode)
-    crc_enabled = parse_crc_enabled(crc_enabled)
-    bitrate = parse_bitrate(bitrate, version, layer)
-    sample_rate = parse_sample_rate(sample_rate, version)
-    padding_enabled = parse_padding_enabled(padding_enabled)
-
-    caps = %MPEG{
-      version: version,
-      layer: layer,
-      crc_enabled: crc_enabled,
-      bitrate: bitrate,
-      sample_rate: sample_rate,
-      padding_enabled: padding_enabled,
-      private: parse_private(private),
-      channel_mode: channel_mode,
-      channels: channels,
-      mode_extension: parse_mode_extension(mode_extension, channel_mode),
-      copyright: parse_copyright(copyright),
-      original: parse_original(original),
-      emphasis_mode: parse_emphasis_mode(emphasis_mode)
-    }
-
-    with :ok <- validate_caps(caps),
-         frame_size <- calculate_frame_size(caps),
+    with {:ok, caps} <- parse_header(payload),
+         frame_size = MPEG.frame_size(caps),
          :full_frame <- verify_payload_size(payload, frame_size),
-         <<frame_payload::size(frame_size)-binary, rest::bitstring>> <- payload,
+         <<frame_payload::size(frame_size)-binary, rest::bitstring>> = payload,
          :ok <- validate_frame_start(rest) do
-      new_acc =
+      acc =
         if previous_caps != caps do
           [{:caps, {:output, caps}} | acc]
         else
@@ -127,38 +91,29 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
         end
 
       frame_buffer = {:buffer, {:output, %Membrane.Buffer{payload: frame_payload}}}
-      do_parse(rest, caps, frame_size, skip_flag, [frame_buffer | new_acc])
+      do_parse(rest, [frame_buffer | acc], caps, frame_size, skip_flag)
     else
-      {:error, :invalid_frame} ->
+      {:error, :unsupported} ->
+        {:error, {:unsupported_frame, payload}}
+
+      {:error, :invalid} ->
         if skip_flag do
           payload
           |> force_skip_to_frame()
-          |> do_parse(previous_caps, prev_frame_size, skip_flag, acc)
+          |> do_parse(acc, previous_caps, prev_frame_size, skip_flag)
         else
           {:error, {:invalid_frame, payload}}
         end
 
       {:partial_frame, frame_size} ->
-        {:ok, acc, payload, previous_caps, frame_size}
+        acc = [{:redemand, :output} | acc] |> Enum.reverse()
+        {:ok, payload, acc, previous_caps, frame_size}
     end
   end
 
-  defp do_parse(payload, _, _, _, _)
-       when byte_size(payload) >= @mpeg_header_size do
-    {:error, {:invalid_frame, payload}}
-  end
-
-  defp do_parse(payload, previous_caps, prev_frame_size, _, acc) do
-    {:ok, acc, payload, previous_caps, prev_frame_size}
-  end
-
-  defp validate_caps(%MPEG{} = caps) do
-    # :free as in free format means bitrate is not specified. Currently it's not supported.
-    if caps |> Map.values() |> Enum.any?(fn val -> val in [:invalid, :free] end) do
-      {:error, :invalid_frame}
-    else
-      :ok
-    end
+  defp do_parse(payload, acc, previous_caps, prev_frame_size, _) do
+    acc = [{:redemand, :output} | acc] |> Enum.reverse()
+    {:ok, payload, acc, previous_caps, prev_frame_size}
   end
 
   defp verify_payload_size(payload, frame_size) do
@@ -169,31 +124,9 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     end
   end
 
-  defp calculate_frame_size(%MPEG{
-         layer: :layer1,
-         bitrate: bitrate,
-         sample_rate: sample_rate,
-         padding_enabled: padding_enabled
-       }) do
-    # FrameLengthInBytes = (12 * BitRate / SampleRate + Padding) * 4
-    padding = if padding_enabled, do: 1, else: 0
-    12 |> Kernel.*(bitrate * 1000) |> div(sample_rate) |> Kernel.+(padding) |> Kernel.*(4)
-  end
-
-  defp calculate_frame_size(%MPEG{
-         layer: _,
-         bitrate: bitrate,
-         sample_rate: sample_rate,
-         padding_enabled: padding_enabled
-       }) do
-    # FrameLengthInBytes = 144 * BitRate / SampleRate + Padding
-    padding = if padding_enabled, do: 1, else: 0
-    144 |> Kernel.*(bitrate * 1000) |> div(sample_rate) |> Kernel.+(padding)
-  end
-
   # Check if argument can be a valid frame. If there's not enough bytes to perform check, assume it's ok
   defp validate_frame_start(<<0b11111111111::size(11), _::bitstring>>), do: :ok
-  defp validate_frame_start(<<_::size(11), _::bitstring>>), do: {:error, :invalid_frame}
+  defp validate_frame_start(<<_::size(11), _::bitstring>>), do: {:error, :invalid}
   defp validate_frame_start(_), do: :ok
 
   defp force_skip_to_frame(<<>>), do: <<>>
@@ -210,14 +143,16 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
     next_payload = payload |> binary_part(1, byte_size(payload) - 1)
     size = byte_size(next_payload)
 
-    case next_payload |> :binary.match(<<0xFF>>) do
-      {pos, _len} ->
-        debug("Dropped bytes: #{inspect(binary_part(payload, 0, pos + 1))}")
-        next_payload |> binary_part(pos, size - pos)
+    next_candidate =
+      case next_payload |> :binary.match(<<0xFF>>) do
+        {pos, _len} ->
+          debug("Dropped bytes: #{inspect(binary_part(payload, 0, pos + 1))}")
+          next_payload |> binary_part(pos, size - pos)
 
-      :nomatch ->
-        <<>>
-    end
-    |> skip_to_frame()
+        :nomatch ->
+          <<>>
+      end
+
+    next_candidate |> skip_to_frame()
   end
 end

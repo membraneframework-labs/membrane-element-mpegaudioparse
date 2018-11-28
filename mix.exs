@@ -1,7 +1,7 @@
 defmodule Membrane.Element.MPEGAudioParse.Mixfile do
   use Mix.Project
 
-  @version "0.2.0"
+  @version "0.2.1"
   @github_url "https://github.com/membraneframework/membrane-element-mpegaudioparse"
 
   def project do
@@ -54,7 +54,7 @@ defmodule Membrane.Element.MPEGAudioParse.Mixfile do
     [
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:membrane_core, "~> 0.2"},
-      {:membrane_caps_audio_mpeg, "~> 0.1"},
+      {:membrane_caps_audio_mpeg, "~> 0.2"},
       {:espec, "~> 1.5", only: :test}
     ]
   end
