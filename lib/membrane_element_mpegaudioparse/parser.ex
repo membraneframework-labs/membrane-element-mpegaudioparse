@@ -11,9 +11,9 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
 
   @mpeg_header_size MPEG.header_size()
 
-  def_input_pads input: [caps: :any, demand_unit: :bytes]
+  def_input_pad :input, caps: :any, demand_unit: :bytes
 
-  def_output_pads output: [caps: MPEG]
+  def_output_pad :output, caps: MPEG
 
   def_options skip_until_frame: [
                 type: :boolean,
