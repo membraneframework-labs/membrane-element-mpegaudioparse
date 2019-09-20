@@ -4,7 +4,7 @@ defmodule Membrane.Element.MPEGAudioParse.Parser do
 
   See `options/0` for available options
   """
-  use Membrane.Element.Base.Filter
+  use Membrane.Filter
   use Membrane.Log, tags: :membrane_element_mpegaudioparse
   alias Membrane.Caps.Audio.MPEG
   import __MODULE__.Helper
