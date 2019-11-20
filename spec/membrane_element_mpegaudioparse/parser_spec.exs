@@ -206,7 +206,7 @@ defmodule Membrane.Element.MPEGAudioParse.ParserSpec do
     let :ctx,
       do: %Ctx.Process{
         clock: nil,
-        pipeline_clock: nil,
+        parent_clock: nil,
         pads: %{:input => %{:caps => nil}, :output => %{:caps => nil}},
         playback_state: :playing
       }
